@@ -28,8 +28,20 @@ export async function PUT(request, { params }) {
       data,
       params.id,
     ]);
-    console.log(result);
-    return NextResponse.json({ ...data });
+    if (result.affectedRows === 0) {
+      return NextResponse.json(
+        {
+          message: "Product not found",
+        },
+        { status: 404 }
+      );
+    }
+    const updatedProduct = await conn.query(
+      "SELECT * FROM product WHERE id = ?",
+      [params.id]
+    );
+
+    return NextResponse.json(updatedProduct[0]);
   } catch (error) {
     return NextResponse.json({ message: error.message }, { status: 500 });
   }
