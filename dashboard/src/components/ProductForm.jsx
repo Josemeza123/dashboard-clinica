@@ -1,6 +1,7 @@
 "use client";
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import axios from "axios";
+import { useRouter, useParams } from "next/navigation";
 
 function ProductForm() {
   const [product, setProduct] = useState({
@@ -8,7 +9,11 @@ function ProductForm() {
     price: 0,
     descripcion: "",
   });
+
+  const router = useRouter();
   const form = useRef(null);
+  const params = useParams();
+
   const handleChange = (e) => {
     console.log(e.target.name, e.target.value);
     setProduct({
@@ -16,12 +21,32 @@ function ProductForm() {
       [e.target.name]: e.target.value,
     });
   };
+
+  useEffect(() => {
+    if (params.id) {
+      axios.get(`/api/products/${params.id}`).then((res) => {
+        setProduct({
+          name: res.data.name,
+          price: res.data.price,
+          descripcion: res.data.descripcion,
+        });
+      });
+    }
+  }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(product);
-    const res = await axios.post("/api/products", product);
-    console.log(res);
+    // console.log(product);
+    if (!params.id) {
+      const res = await axios.post("/api/products", product);
+      // console.log(res);
+    } else {
+      const res = await axios.put("/api/products/" + params.id, product);
+      // console.log(res);
+    }
     form.current.reset();
+    router.refresh();
+    router.push("/products");
   };
   return (
     <div>
@@ -41,9 +66,11 @@ function ProductForm() {
           type="text"
           id="name"
           name="name"
+          autoFocus
           placeholder="Nombre del producto"
           className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
           onChange={handleChange}
+          value={product.name}
         />
 
         <label
@@ -59,6 +86,7 @@ function ProductForm() {
           placeholder="00.00"
           className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
           onChange={handleChange}
+          value={product.price}
         />
 
         <label
@@ -74,10 +102,11 @@ function ProductForm() {
           placeholder="descripcion"
           className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
           onChange={handleChange}
+          value={product.descripcion}
         ></textarea>
 
         <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-          Save Product
+          {params.id ? "Update" : "Create"}
         </button>
       </form>
     </div>
